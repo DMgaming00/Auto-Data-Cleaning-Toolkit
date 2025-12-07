@@ -144,6 +144,6 @@ mlflow ui
 ---
 
 # 👨‍🏫 Authors
-- Student: _Your Name_  
-- Course: CMPE 255  
-- Instructor: _Professor Name_  
+- Team: Neural Nomads 
+- Course: CMPE 255 Data Mining
+- Instructor: Vijay Eranti 
