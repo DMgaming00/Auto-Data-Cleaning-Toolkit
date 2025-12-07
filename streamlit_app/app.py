@@ -168,7 +168,7 @@ def build_preprocessor(
 
     # ---- Categorical encoding ----
     if cat_encoding == "One-Hot":
-        encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+        encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
     else:
         encoder = OrdinalEncoder(
             handle_unknown="use_encoded_value", unknown_value=-1)
