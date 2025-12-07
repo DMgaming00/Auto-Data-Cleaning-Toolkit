@@ -5,7 +5,7 @@
 🔗 [**Streamlit App**](https://auto-data-cleaning-toolkit.streamlit.app/#feature-importance-random-forest)  
 
 ### 🎥 Video Demo  
-🔗 **Google Drive Video Link:** _Insert your recorded project video link here_
+🔗 [**Google Drive Video Link:**](https://drive.google.com/file/d/1o8i5WUcxVP0KOcuccj7c1xPK0f5J8zlK/view?usp=sharing)
 
 ### 📓 Colab Notebook  
 🔗 [**Google Colab**](https://colab.research.google.com/drive/19g4Ko8QUyOlim-OL8Ng0cPvppsF_of7w?usp=sharing)
