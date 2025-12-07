@@ -33,7 +33,8 @@ from sklearn.metrics import (
 )
 from sklearn.inspection import partial_dependence
 
-import shap
+# Make plots smaller/safer for Streamlit Cloud
+plt.rcParams["figure.dpi"] = 72
 
 
 # -------------------------------------------------------------------
@@ -51,17 +52,16 @@ st.markdown(
 This app demonstrates an end-to-end **CRISP-DM** workflow with the features you
 requested:
 
-- Multiple imputation strategies (mean / median / KNN / iterative)
-- Outlier removal (IQR / IsolationForest)
-- Skew correction (log1p / Yeo-Johnson)
-- Categorical encoders (One-Hot / Ordinal)
-- Datetime feature engineering (year / month / day)
-- Duplicate removal
-- Feature selection (VarianceThreshold / RFE)
-- RandomForest feature importance
-- SHAP (top-10 features, safe for cloud)
-- Partial Dependence Plots (PDP)
-- Downloadable cleaned dataset (CSV) + HTML model report
+- Multiple imputation strategies (mean / median / KNN / iterative)  
+- Outlier removal (IQR / IsolationForest)  
+- Skew correction (log1p / Yeo-Johnson)  
+- Categorical encoders (One-Hot / Ordinal)  
+- Datetime feature engineering (year / month / day)  
+- Duplicate removal  
+- Feature selection (VarianceThreshold / RFE)  
+- RandomForest feature importance  
+- Partial Dependence Plots (PDP)  
+- Downloadable cleaned dataset (CSV) + HTML model report  
 """
 )
 
@@ -87,7 +87,8 @@ def expand_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
             dt = s
         elif s.dtype == "object":
             try:
-                dt_candidate = pd.to_datetime(s, errors="raise", infer_datetime_format=True)
+                # infer_datetime_format is deprecated; default behavior is strict now
+                dt_candidate = pd.to_datetime(s, errors="raise")
                 if np.issubdtype(dt_candidate.dtype, np.datetime64):
                     dt = dt_candidate
             except Exception:
@@ -242,8 +243,8 @@ def generate_html_report(
     html.write("<h2>Classification Report</h2><pre>")
     html.write(classification_rep)
     html.write("</pre>")
-    html.write("<p><i>Figures such as confusion matrix, ROC curve, SHAP plots, "
-               "and PDPs are available in the app and in the MLflow pipeline.</i></p>")
+    html.write("<p><i>Figures such as confusion matrix, ROC curve, and PDPs are "
+               "available in the app and in the MLflow pipeline.</i></p>")
     html.write("</body></html>")
     return html.getvalue()
 
@@ -256,13 +257,11 @@ def get_feature_names_after_selection(
     """
     Build feature names after preprocessing AND any feature selection.
 
-    This keeps names in sync with:
+    Keeps names in sync with:
     - ColumnTransformer (numeric + encoded categorical)
     - VarianceThreshold
     - RFE
-    so that len(feature_names) == len(model.feature_importances_).
     """
-    # 1) Base names after preprocessing
     pre: ColumnTransformer = pipe.named_steps["pre"]
     feature_names: List[str] = []
 
@@ -280,13 +279,13 @@ def get_feature_names_after_selection(
         else:
             feature_names.extend(cat_cols)
 
-    # 2) After VarianceThreshold
+    # After VarianceThreshold
     if "var_sel" in pipe.named_steps:
         selector: VarianceThreshold = pipe.named_steps["var_sel"]
         mask = selector.get_support()
         feature_names = [n for n, keep in zip(feature_names, mask) if keep]
 
-    # 3) After RFE
+    # After RFE
     if "rfe" in pipe.named_steps:
         selector: RFE = pipe.named_steps["rfe"]
         mask = selector.get_support()
@@ -318,7 +317,7 @@ else:
 
 st.subheader("📊 Raw Data Preview")
 st.write(f"Shape: **{raw_df.shape[0]} rows × {raw_df.shape[1]} columns**")
-st.dataframe(raw_df.head(), use_container_width=True)
+st.dataframe(raw_df.head(), width="stretch")
 
 # ---- Cleaning options ----
 st.sidebar.header("2. Data Cleaning & Preparation")
@@ -414,7 +413,7 @@ if removed_outliers > 0:
 
 st.subheader("🧼 Cleaning Summary")
 st.write(f"After cleaning: **{df.shape[0]} rows × {df.shape[1]} columns**")
-st.dataframe(df.head(), use_container_width=True)
+st.dataframe(df.head(), width="stretch")
 
 # Download cleaned dataset
 csv_clean = df.to_csv(index=False).encode("utf-8")
@@ -545,12 +544,10 @@ else:
 st.subheader("📊 Feature Importance (RandomForest)")
 
 try:
-    # Build final feature-name list after selection
     feature_names = get_feature_names_after_selection(pipe, num_cols, cat_cols)
-
     importances = pipe["model"].feature_importances_
 
-    # Safety: if mismatch, fall back to generic names
+    # Safety fallback if lengths mismatch for any reason
     if len(feature_names) != len(importances):
         feature_names = [f"feature_{i}" for i in range(len(importances))]
 
@@ -568,51 +565,6 @@ except Exception as e:
     st.warning(f"Feature importance failed: {e}")
 
 # -------------------------------------------------------------------
-# SHAP feature importance (top 10, robust)
-# -------------------------------------------------------------------
-st.subheader("🧠 SHAP Feature Importance (Top 10)")
-
-try:
-    sample_size = min(300, len(X_train))
-    X_sample = X_train.sample(sample_size, random_state=42)
-
-    X_sample_proc = pipe["pre"].transform(X_sample)
-    if hasattr(X_sample_proc, "toarray"):
-        X_sample_proc = X_sample_proc.toarray()
-
-    # Use the same feature names we computed for FI
-    feature_names_for_shap = get_feature_names_after_selection(pipe, num_cols, cat_cols)
-    if len(feature_names_for_shap) != X_sample_proc.shape[1]:
-        feature_names_for_shap = [f"feature_{i}" for i in range(X_sample_proc.shape[1])]
-
-    X_sample_df = pd.DataFrame(X_sample_proc, columns=feature_names_for_shap)
-
-    explainer = shap.TreeExplainer(pipe["model"])
-    shap_values = explainer.shap_values(X_sample_df)
-
-    if isinstance(shap_values, list):
-        if len(shap_values) == 2:
-            sv = shap_values[1]
-        else:
-            sv_arr = np.array(shap_values)
-            sv = sv_arr.mean(axis=0)
-    else:
-        sv = shap_values
-
-    mean_abs_shap = np.abs(sv).mean(axis=0)
-    top_idx = np.argsort(mean_abs_shap)[-10:]
-    top_features = [feature_names_for_shap[i] for i in top_idx]
-    X_top = X_sample_df[top_features]
-    sv_top = sv[:, top_idx]
-
-    fig_shap = plt.figure(figsize=(7, 5))
-    shap.summary_plot(sv_top, X_top, feature_names=top_features, show=False)
-    st.pyplot(fig_shap)
-
-except Exception as e:
-    st.warning(f"SHAP failed (this is optional for the demo): {e}")
-
-# -------------------------------------------------------------------
 # Partial Dependence Plots
 # -------------------------------------------------------------------
 st.subheader("📉 Partial Dependence Plots (PDP)")
@@ -625,11 +577,17 @@ if not candidate_pdp_cols:
 if not candidate_pdp_cols:
     st.info("No numeric columns found for PDP.")
 else:
+    # Convert integer columns to float to avoid sklearn future warnings
+    X_pdp = X_train.copy()
+    for c in candidate_pdp_cols:
+        if np.issubdtype(X_pdp[c].dtype, np.integer):
+            X_pdp[c] = X_pdp[c].astype(float)
+
     cols = st.columns(len(candidate_pdp_cols))
     for col_ax, feature in zip(cols, candidate_pdp_cols):
         with col_ax:
             try:
-                pdp_res = partial_dependence(pipe, X=X_train, features=[feature])
+                pdp_res = partial_dependence(pipe, X=X_pdp, features=[feature])
                 grid = pdp_res.get("grid_values", pdp_res.get("values"))[0]
                 avg = pdp_res["average"][0]
 
@@ -641,3 +599,4 @@ else:
                 st.pyplot(fig_pdp)
             except Exception as e:
                 st.warning(f"Could not compute PDP for {feature}: {e}")
+
