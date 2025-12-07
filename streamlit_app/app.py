@@ -41,16 +41,15 @@ plt.rcParams["figure.dpi"] = 72
 # Page config
 # -------------------------------------------------------------------
 st.set_page_config(
-    page_title="CMPE 255 – Auto Data Toolkit (Enhanced)",
+    page_title="CMPE 255 – Auto Data Toolkit",
     layout="wide",
     page_icon="🚢",
 )
 
-st.title("🚢 CMPE 255 – Auto Data Toolkit (Enhanced)")
+st.title("🚢 CMPE 255 – Auto Data Toolkit")
 st.markdown(
     """
-This app demonstrates an end-to-end **CRISP-DM** workflow with the features you
-requested:
+This app demonstrates an end-to-end **CRISP-DM** workflow with these features:
 
 - Multiple imputation strategies  
 - Outlier removal (IQR / IsolationForest)  
@@ -62,9 +61,6 @@ requested:
 - RandomForest feature importance  
 - Partial Dependence Plots (PDP)  
 - Downloadable cleaned dataset + HTML report  
-
-🔥 **High-cardinality text columns (Name, Ticket, Cabin) are automatically removed**  
-to avoid massive one-hot encoding expansion and Streamlit display errors.
 """
 )
 
