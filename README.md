@@ -2,13 +2,13 @@
 # 🚀 Auto Data Cleaning Toolkit (CMPE 255 Final Project)
 
 ### 🌐 Live Demo  
-🔗 [**Streamlit App:**](https://auto-data-cleaning-toolkit.streamlit.app/#feature-importance-random-forest)  
+🔗 [**Streamlit App**](https://auto-data-cleaning-toolkit.streamlit.app/#feature-importance-random-forest)  
 
 ### 🎥 Video Demo  
 🔗 **Google Drive Video Link:** _Insert your recorded project video link here_
 
 ### 📓 Colab Notebook  
-🔗 [**Google Colab:**](https://colab.research.google.com/drive/19g4Ko8QUyOlim-OL8Ng0cPvppsF_of7w?usp=sharing)
+🔗 [**Google Colab**](https://colab.research.google.com/drive/19g4Ko8QUyOlim-OL8Ng0cPvppsF_of7w?usp=sharing)
 
 ---
 
