@@ -353,6 +353,22 @@ st.download_button(
 y = df[target_col]
 X = df.drop(columns=[target_col])
 
+# ------------------------------------------
+# SAFE STRATIFICATION CHECK (IMPORTANT FIX)
+# ------------------------------------------
+class_counts = y.value_counts()
+
+# If stratification is impossible (class with < 2 samples)
+if class_counts.min() < 2:
+    stratify_option = None
+    st.warning(
+        "⚠️ Stratified split disabled automatically because at least one class has fewer than 2 samples after cleaning.\n"
+        "Try reducing outlier removal or using a larger dataset."
+    )
+else:
+    stratify_option = y
+
+
 pipe, numeric_cols, categorical_cols = build_preprocessor(
     X,
     imputation_strategy,
@@ -363,8 +379,9 @@ pipe, numeric_cols, categorical_cols = build_preprocessor(
 )
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=test_size, stratify=y, random_state=42
+    X, y, test_size=test_size, stratify=stratify_option, random_state=42
 )
+
 
 pipe.fit(X_train, y_train)
 y_pred = pipe.predict(X_test)
