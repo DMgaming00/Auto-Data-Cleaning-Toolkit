@@ -41,12 +41,12 @@ plt.rcParams["figure.dpi"] = 72
 # Page config
 # -------------------------------------------------------------------
 st.set_page_config(
-    page_title="CMPE 255 – Auto Data Cleaning Toolkit",
+    page_title="Auto Data Cleaning Toolkit",
     layout="wide",
     page_icon="🚢",
 )
 
-st.title("🚢 CMPE 255 – Auto Data Cleaning Toolkit")
+st.title("🚢 Auto Data Cleaning Toolkit")
 st.markdown(
     """
 This app demonstrates an end-to-end **CRISP-DM** workflow with these features:
